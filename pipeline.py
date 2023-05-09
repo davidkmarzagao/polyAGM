@@ -307,7 +307,8 @@ def run_kernels_against_target(df,
 
 
                     if RFE_selection:
-                        print(">> Performing REF selection for ", RFE_selection_n_features, " features.")
+                        if printing_results:
+                            print(">> Performing REF selection for ", RFE_selection_n_features, " features.")
                         selector = RFE(met, n_features_to_select = RFE_selection_n_features, step=0.01)
                         selector = selector.fit(K_train, y_train)
                         feature_vectors = feature_vectors[:, selector.support_]

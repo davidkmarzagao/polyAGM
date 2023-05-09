@@ -445,8 +445,7 @@ def plot_predictions_against_real_values_with_hovering(x, y, error_variance, exp
 #         plt.errorbar(x,y, xerr=error_x, ecolor='gray', linestyle="None")
         markers, caps, bars = plt.errorbar(x,y, xerr=error_x,  color="b", linestyle="None")
         [bar.set_alpha(0.5) for bar in bars]
-    print("Writing figure in HTML")
-    
+#     print("Writing figure in HTML")
 
     fig.savefig("plot_in_svg.svg", format="svg", dpi=2400)
     plt.show()

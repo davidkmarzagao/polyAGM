@@ -6,6 +6,11 @@ from rdkit import Chem
 import random
 import pickle
 
+
+from rdkit import Chem
+from rdkit.Chem import rdFingerprintGenerator
+
+
 def separate_monomers(smile):
     # print("first input = {}".format(smile))
     split = []
@@ -108,6 +113,79 @@ def from_smiles_to_networkx(smiles, block_ratios, ignore_entries, contains_stere
                 print("Aromatic false") 
                 print("Explicit H", explicit_H) 
                 full_pols.append(read_smiles(full_polymer, reinterpret_aromatic = False, explicit_hydrogen = explicit_H))
+        # Transforming smiles into networkX
+    return full_pols
+
+
+def from_smiles_to_morgan_dict(smiles, block_ratios, ignore_entries, contains_stereo, use_chiral, use_pickle=True, explicit_H = False, rad = 3):
+    print("USE CHIRAL = {}".format(use_chiral))
+    full_pols = []
+    for counter in range(len(smiles)):
+        if len(ignore_entries) != 0:
+            if ignore_entries[counter]:
+                continue
+        print(counter)
+        s = separate_monomers(smiles[counter])
+        block_ratio = separate_block_ratio(block_ratios[counter])
+        full_polymer = assemble_full_polymer(s, block_ratio)
+#         print('full polymer = {}'.format(full_polymer))
+        full_polymer = full_polymer.replace("{", "")
+        full_polymer = full_polymer.replace("}", "")
+        if use_pickle:
+            try:
+                fingerprint = pickle.load(open("./temp/pol_morgan/pol_rad{}_row{}.pickle".format(rad,counter), "rb"))
+                print("loaded")
+            except (OSError, IOError) as e:
+                print("pickle not found, translating")
+                mol = Chem.MolFromSmiles(full_polymer)
+                generator = rdFingerprintGenerator.GetMorganGenerator(radius = rad, includeChirality=True, fpSize=100000)
+                fingerprint = generator.GetSparseCountFingerprint(mol)
+#                fingerprint = generator.GetSparCountFingerprint(mol)
+                print("dumping")
+                pickle.dump(fingerprint, open("./temp/pol_morgan/pol_rad{}_row{}.pickle".format(rad,counter), "wb"));
+        else: 
+            generator = rdFingerprintGenerator.GetMorganGenerator(radius = rad, includeChirality=True, fpSize=100000)
+            fingerprint = generator.GetSparseCountFingerprint(mol)
+        full_pols.append(fingerprint)
+#
+#         mol = Chem.MolFromSmiles(full_polymer)
+#         print('full polymer = {}'.format(full_polymer))
+#         mol = Chem.MolFromSmiles(full_polymer)
+#         if not use_chiral:
+#             print("Aromatic false")
+#             generator = rdFingerprintGenerator.GetMorganGenerator(radius = rad, includeChirality=True, fpSize=100000)
+#             fingerprint = generator.GetSparseCountFingerprint(mol)
+# #             fingerprint = generator.GetSparCountFingerprint(mol)
+# #             non_zero = fingerprint.GetNonzeroElements()
+#             fingerprint
+# # non_zero
+#             full_pols.append(fingerprint)
+#         else:
+#             generator = rdFingerprintGenerator.GetMorganGenerator(radius = rad, includeChirality=False, fpSize=100000)
+#             print("sparse fingerprint")
+#             fingerprint = generator.GetSparseCountFingerprint(mol)
+            
+#             fingerprint = generator.GetCountFingerprint(mol)
+#             non_zero = fingerprint.GetNonzeroElements()        
+#          
+#             if contains_stereo[counter]:
+#                 print("has stereo")
+#                 if use_pickle:
+#                     try:
+#                         cur_pol = pickle.load(open("./temp/pol_networkx/pol_row{}.pickle".format(counter), "rb"))
+#                         print("loaded")
+#                     except (OSError, IOError) as e:
+#                         print("pickle not found, translating")
+#                         cur_pol = cur_pol = translate(full_polymer)
+#                         print("dumping")
+#                         pickle.dump(cur_pol, open("./temp/pol_networkx/pol_row{}.pickle".format(counter), "wb"));
+#                 else: cur_pol = translate(full_polymer)
+#                 full_pols.append(cur_pol)
+#             else: 
+#                 print("no stereo")
+#                 print("Aromatic false") 
+#                 print("Explicit H", explicit_H) 
+#                 full_pols.append(read_smiles(full_polymer, reinterpret_aromatic = False, explicit_hydrogen = explicit_H))
         # Transforming smiles into networkX
     return full_pols
 
